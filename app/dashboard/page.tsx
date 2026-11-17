@@ -44,6 +44,15 @@ export default async function DashboardPage() {
     .eq("user_id", user.id)
     .order("date", { ascending: false })
 
+  // Normalize the Supabase relation (returned as an array) for the UI components.
+  const normalizedTransactions = (transactions || []).map((transaction) => ({
+    ...transaction,
+    categories: {
+      name: transaction.categories?.[0]?.name || "Sem categoria",
+      color: transaction.categories?.[0]?.color || "#6b7280",
+    },
+  }))
+
   // Calculate summary
   const income = transactions?.filter((t) => t.type === "income").reduce((sum, t) => sum + Number(t.amount), 0) || 0
 
@@ -73,14 +82,14 @@ export default async function DashboardPage() {
 
           <div className="grid gap-8 lg:grid-cols-3">
             <div className="lg:col-span-2">
-              <TransactionsList transactions={transactions || []} />
+              <TransactionsList transactions={normalizedTransactions} />
             </div>
             <div>
               <ExpenseChart data={expensesByCategory} />
             </div>
           </div>
 
-          <ExpensesByCategoryTable transactions={transactions || []} />
+          <ExpensesByCategoryTable transactions={normalizedTransactions} />
         </div>
       </main>
     </>
