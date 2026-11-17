@@ -1,4 +1,4 @@
-name: Refresh pnpm lockfile for Next.js security update
+name: Refresh pnpm lockfile for Next.js security update # temporary
 
 on:
   push:
