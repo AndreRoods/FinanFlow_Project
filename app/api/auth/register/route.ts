@@ -26,6 +26,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Não foi possível criar a conta. Verifique a configuração do banco de dados." }, { status: 500 })
     }
 
+    const defaultCategories = [
+      { user_id: data.id, name: "Salário", type: "income", color: "#10b981" },
+      { user_id: data.id, name: "Freelance", type: "income", color: "#f59e0b" },
+      { user_id: data.id, name: "Investimentos", type: "income", color: "#6366f1" },
+      { user_id: data.id, name: "Alimentação", type: "expense", color: "#ef4444" },
+      { user_id: data.id, name: "Transporte", type: "expense", color: "#8b5cf6" },
+      { user_id: data.id, name: "Educação", type: "expense", color: "#3b82f6" },
+      { user_id: data.id, name: "Saúde", type: "expense", color: "#06b6d4" },
+      { user_id: data.id, name: "Entretenimento", type: "expense", color: "#ec4899" },
+    ]
+    const { error: categoryError } = await supabase.from("categories").insert(defaultCategories)
+    if (categoryError) {
+      await supabase.from("app_users").delete().eq("id", data.id)
+      console.error("Falha ao criar categorias iniciais:", categoryError.message)
+      return NextResponse.json({ error: "Não foi possível preparar sua conta. Tente novamente." }, { status: 500 })
+    }
+
     await createSession(data.id)
     return NextResponse.json({ success: true })
   } catch (error) {
