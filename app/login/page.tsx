@@ -1,19 +1,13 @@
 "use client"
 
 import type React from "react"
-import { createClient } from "@/lib/supabase/client"
+import { useState } from "react"
+import { useRouter } from "next/navigation"
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { useState } from "react"
-
-const usernameToEmail = (value: string) => {
-  const username = value.trim().toLowerCase()
-  return username.includes("@") ? username : `${username}@users.finanflow.invalid`
-}
 
 export default function LoginPage() {
   const [username, setUsername] = useState("")
@@ -22,71 +16,35 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleLogin = async (event: React.FormEvent) => {
+    event.preventDefault()
     setIsLoading(true)
     setError(null)
-
     try {
-      const supabase = createClient()
-      const { error } = await supabase.auth.signInWithPassword({
-        email: usernameToEmail(username),
-        password,
-      })
-      if (error) throw error
-      router.push("/dashboard")
+      const response = await fetch("/api/auth/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ username, password }) })
+      const result = await response.json()
+      if (!response.ok) throw new Error(result.error || "Não foi possível entrar.")
+      router.replace("/dashboard")
       router.refresh()
-    } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : "Não foi possível entrar. Confira seu usuário e senha.")
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao fazer login.")
     } finally {
       setIsLoading(false)
     }
   }
 
   return (
-    <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10 bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="flex min-h-svh w-full items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-6 md:p-10">
       <div className="w-full max-w-sm">
         <Card>
-          <CardHeader>
-            <CardTitle className="text-2xl">Entrar</CardTitle>
-            <CardDescription>Acesse sua conta para gerenciar suas finanças</CardDescription>
-          </CardHeader>
+          <CardHeader><CardTitle className="text-2xl">Entrar</CardTitle><CardDescription>Entre com seu nome de usuário e senha.</CardDescription></CardHeader>
           <CardContent>
-            <form onSubmit={handleLogin}>
-              <div className="flex flex-col gap-6">
-                <div className="grid gap-2">
-                  <Label htmlFor="username">Nome de usuário</Label>
-                  <Input
-                    id="username"
-                    autoComplete="username"
-                    placeholder="Seu nome de usuário"
-                    required
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="password">Senha</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    autoComplete="current-password"
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                  />
-                </div>
-                {error && <p className="text-sm text-red-500">{error}</p>}
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? "Entrando..." : "Entrar"}
-                </Button>
-              </div>
-              <div className="mt-4 text-center text-sm">
-                Não tem uma conta?{" "}
-                <Link href="/sign-up" className="underline underline-offset-4 text-blue-600 hover:text-blue-700">
-                  Criar conta
-                </Link>
-              </div>
+            <form onSubmit={handleLogin} className="flex flex-col gap-5">
+              <div className="grid gap-2"><Label htmlFor="username">Nome de usuário</Label><Input id="username" autoComplete="username" minLength={3} maxLength={24} required value={username} onChange={(e) => setUsername(e.target.value)} /></div>
+              <div className="grid gap-2"><Label htmlFor="password">Senha</Label><Input id="password" type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} /></div>
+              {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
+              <Button type="submit" className="w-full" disabled={isLoading}>{isLoading ? "Entrando..." : "Entrar"}</Button>
+              <p className="text-center text-sm">Não tem uma conta? <Link href="/sign-up" className="text-blue-600 underline underline-offset-4">Criar conta</Link></p>
             </form>
           </CardContent>
         </Card>
