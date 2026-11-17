@@ -71,7 +71,7 @@ export default async function DashboardPage() {
 
   return (
     <>
-      <DashboardHeader userName={user.email?.split("@")[0]} />
+      <DashboardHeader userName={user.user_metadata?.display_name || user.user_metadata?.username || user.email?.split("@")[0]} />
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="space-y-8">
           <FinancialSummary income={income} expense={expense} />

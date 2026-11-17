@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -11,8 +10,13 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 
+const usernameToEmail = (value: string) => {
+  const username = value.trim().toLowerCase()
+  return username.includes("@") ? username : `${username}@users.finanflow.invalid`
+}
+
 export default function LoginPage() {
-  const [email, setEmail] = useState("")
+  const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
@@ -20,49 +24,20 @@ export default function LoginPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    const supabase = createClient()
     setIsLoading(true)
     setError(null)
 
     try {
+      const supabase = createClient()
       const { error } = await supabase.auth.signInWithPassword({
-        email,
+        email: usernameToEmail(username),
         password,
       })
       if (error) throw error
       router.push("/dashboard")
+      router.refresh()
     } catch (error: unknown) {
-      let errorMessage = "Erro ao fazer login"
-      
-      if (error instanceof Error) {
-        const errorMsg = error.message.toLowerCase()
-        const errorStr = error.toString().toLowerCase()
-        
-        // Erros de conexão/DNS - verifica múltiplos padrões
-        if (
-          errorMsg.includes("failed to fetch") || 
-          errorMsg.includes("err_name_not_resolved") ||
-          errorMsg.includes("network error") ||
-          errorMsg.includes("network request failed") ||
-          errorStr.includes("err_name_not_resolved") ||
-          errorStr.includes("failed to fetch")
-        ) {
-          errorMessage = "❌ Erro de conexão com o Supabase. O projeto pode estar pausado ou a URL está incorreta. Verifique: 1) Se o projeto existe no dashboard do Supabase, 2) Se a URL no arquivo .env.local está correta, 3) Se o servidor foi reiniciado após atualizar o .env.local"
-        } else if (errorMsg.includes("network")) {
-          errorMessage = "Erro de rede. Verifique sua conexão com a internet."
-        } else {
-          errorMessage = error.message
-        }
-      } else if (typeof error === "string") {
-        // Pode ser uma string com o erro
-        if (error.toLowerCase().includes("failed to fetch") || error.toLowerCase().includes("err_name_not_resolved")) {
-          errorMessage = "❌ Erro de conexão com o Supabase. Verifique se o projeto está ativo e a URL está correta no arquivo .env.local"
-        } else {
-          errorMessage = error
-        }
-      }
-      
-      setError(errorMessage)
+      setError(error instanceof Error ? error.message : "Não foi possível entrar. Confira seu usuário e senha.")
     } finally {
       setIsLoading(false)
     }
@@ -80,14 +55,14 @@ export default function LoginPage() {
             <form onSubmit={handleLogin}>
               <div className="flex flex-col gap-6">
                 <div className="grid gap-2">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="username">Nome de usuário</Label>
                   <Input
-                    id="email"
-                    type="email"
-                    placeholder="seu@email.com"
+                    id="username"
+                    autoComplete="username"
+                    placeholder="Seu nome de usuário"
                     required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
                   />
                 </div>
                 <div className="grid gap-2">
@@ -95,6 +70,7 @@ export default function LoginPage() {
                   <Input
                     id="password"
                     type="password"
+                    autoComplete="current-password"
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
