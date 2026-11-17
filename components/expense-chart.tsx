@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts"
 
-interface Category {
+interface Category extends Record<string, string | number> {
   name: string
   value: number
   color: string
