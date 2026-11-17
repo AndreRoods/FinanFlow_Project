@@ -34,7 +34,7 @@ export function ExpenseChart({ data }: { data: Category[] }) {
               cx="50%"
               cy="50%"
               labelLine={false}
-              label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+              label={({ name, percent }) => `${String(name ?? "")} ${((typeof percent === "number" ? percent : 0) * 100).toFixed(0)}%`}
               outerRadius={80}
               fill="#8884d8"
               dataKey="value"
